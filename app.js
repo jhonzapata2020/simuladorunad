@@ -598,18 +598,47 @@ function crearInsignia(nom, documento, grupo){
 </svg>`;
 }
 
-function mostrarInsignia(){
+function validarEmisionInsignia(huboError, salidaConsola, codigoFuente) {
+  if (huboError) return false;
+
+  const tieneSalidaVisible = (salidaConsola || "").trim().length > 0;
+
+  const lineasReales = (codigoFuente || "")
+    .trim()
+    .split('\n')
+    .filter(l => l.trim() && !l.trim().startsWith('#'));
+  const tieneMinimoLineas = lineasReales.length >= 3;
+
+  return tieneSalidaVisible && tieneMinimoLineas;
+}
+
+function mostrarInsignia(huboError = false, salidaConsola = "", codigoFuente = ""){
+  if (!validarEmisionInsignia(huboError, salidaConsola, codigoFuente)) {
+    ocultarInsignia();
+    return;
+  }
+
   try{
-    const valNom = nombre ? nombre.value.trim() : "";
-    const valCc = cc ? cc.value.trim() : "";
-    const valGrupo = inputGrupo ? inputGrupo.value.trim() : "";
+    const elNom = document.getElementById("nombre");
+    const elCc = document.getElementById("cc");
+    const elGrupo = document.getElementById("input-grupo");
+    const valNom = elNom ? elNom.value.trim() : "";
+    const valCc = elCc ? elCc.value.trim() : "";
+    const valGrupo = elGrupo ? elGrupo.value.trim() : "";
     ultimoSVG = crearInsignia(valNom, valCc, valGrupo);
-    badgePreview.innerHTML = ultimoSVG;
-    insignia.style.display = "block";
+    
+    const preview = document.getElementById("badgePreview");
+    if (preview) preview.innerHTML = ultimoSVG;
+    
+    const ins = document.getElementById("insignia");
+    if (ins) ins.style.display = "block";
   }catch(e){
-    insignia.style.display = "block";
-    badgePreview.innerHTML =
-      "<p>No fue posible crear el QR: " + escXML(e.message || String(e)) + "</p>";
+    const ins = document.getElementById("insignia");
+    const preview = document.getElementById("badgePreview");
+    if (ins) ins.style.display = "block";
+    if (preview) {
+      preview.innerHTML = "<p>No fue posible crear el QR: " + escXML(e.message || String(e)) + "</p>";
+    }
   }
 }
 
@@ -802,7 +831,7 @@ finally:
     if(btnIr) btnIr.style.display = "none";
     if(btnExp) btnExp.style.display = "none";
     actualizarNumerosLinea();
-    mostrarInsignia();
+    mostrarInsignia(false, stdout, codigoActual);
 
   }catch(error){
     sesionActiva = false;
@@ -844,11 +873,220 @@ terminalInput.addEventListener("keydown",async(e)=>{
 const plantillasCodigo = {
   libre: '# Escribe tu código Python aquí\nprint("¡Hola Mundo!")',
   ejemplo_input: 'nombre = input("¿Cómo te llamas? ")\nprint(f"Hola, {nombre}!")',
-  prob1: `# Problema 1: Cine Full\nFILAS = 5\nASIENTOS_POR_FILA = 10\n\ndef inicializar_sala():\n    fila = [0] * ASIENTOS_POR_FILA\n    sala = [fila] * FILAS\n    return sala\n\n# Continúa el código aquí...`,
-  prob2: `# Problema 2: Ventas\nVENTAS_POR_MES = {"enero": 1500, "febrero": 2200, "marzo": 1800}\nLIMITE_BONO = 5000\n\n# Continúa el código aquí...`,
-  prob3: `# Problema 3: RRHH\nDATOS_EMPLEADOS = [\n    {"nombre": "Ana García", "horas": 160, "tarifa": 15.5},\n    {"nombre": "Luis Pérez", "horas": "150", "tarifa": 18.0},\n    {"nombre": "Marta López", "horas": 165, "tarifa": 12.0}\n]\n\n# Continúa el código aquí...`,
-  prob4: `# Problema 4: Inventario\nINVENTARIO = [\n    {"producto": "Camisa Casual", "stock": 12, "ventas_prom": 5},\n    {"producto": "Pantalón Denim", "stock": 4, "ventas_prom": 8},\n    {"producto": "Chaqueta Lona", "stock": "8", "ventas_prom": 3}\n]\n\n# Continúa el código aquí...`,
-  prob5: `# Problema 5: Proyectos\nDATOS_PROYECTO = [\n    [101, "Completado", "Ana"],\n    [102, "Pendiente", "Luis"],\n    [103, "En Curso", "Ana"],\n    [104, "Pendiente", "Marta"]\n]\n\n# Continúa el código aquí...`
+  prob1: `FILAS = 5
+ASIENTOS_POR_FILA = 10
+
+def inicializar_sala():
+    fila = [0] * ASIENTOS_POR_FILA
+    sala = [fila] * FILAS
+    return sala
+
+def mostrar_sala(sala):
+    print("\\n--- Estado de la Sala ---")
+    for f in range(FILAS - 1):
+        print(f"F{f+1}:", end=" ")
+        for estado in sala[f]:
+            simbolo = ""
+            if estado == 0:
+                simbolo = "D"
+            elif estado == 1
+                simbolo = "V"
+            elif estado == 2:
+                simbolo = "R"
+            print(simbolo, end="")
+        print()
+
+def validar_asiento(sala, fila, asiento):
+    if fila >= 1 and fila <= 5 and asiento >= 0 and asiento < 10:
+        return 1
+    else:
+        return 0
+
+def obtener_precio(fila):
+    if fila == 1 or 2:
+        return "$8000"
+    elif fila == 3 or 4:
+        return 6000
+    elif fila == 5:
+        return 4000
+    return 0
+
+def vender_asiento(sala, fila, asiento):
+    if validar_asiento(sala, fila, asiento) == 0:
+        return 0
+    indice_fila = fila - 1
+    indice_asiento = asiento
+    if sala[indice_fila][indice_asiento] == 0:
+        sala[indice_fila][indice_asiento] = 1
+        return obtener_precio(fila)
+    else:
+        return 0
+
+def devolver_asiento(sala, fila, asiento):
+    if validar_asiento(sala, fila, asiento) == 0:
+        return 0
+    indice_fila = fila - 1
+    indice_asiento = asiento - 1
+    precio_base = obtener_precio(fila)
+    if sala[indice_fila][indice_asiento] == 1:
+        sala[indice_fila][indice_asiento] = 2
+        penalidad = precio_base * 0.20
+        return penalidad
+    elif sala[indice_fila][indice_asiento] == 2:
+        sala[indice_fila][indice_asiento] = 0
+        return -1
+    else:
+        return 0
+
+def menu_principal():
+    sala_cine = inicializar_sala()
+    ingreso_neto = 0
+    total_penalidades = 0
+    opcion = 0
+    while opcion != 4:
+        print("\\n===== Menú: Cine Full =====")
+        print("1. Venta de Asiento.")
+        print("2. Recolección/Devolución de Asiento.")
+        print("3. Mostrar Estado de la Sala.")
+        print("4. Salir.")
+        try:
+            opcion = int(input("¿Cuál es su opción? "))
+        except ValueError:
+            print("Opción no válida.")
+            continue
+
+if __name__ == "__main__":
+    menu_principal()`,
+
+  prob2: `VENTAS_POR_MES = {"enero": 1500, "febrero": 2200, "marzo": 1800}
+LIMITE_BONO = 5000
+
+def solicitar_datos():
+    """Solicita un nombre y una cantidad al usuario."""
+    nombre_vendedor = input("Ingrese su nombre: ")
+    try:
+        cantidad_nueva = int(input("Ingrese las ventas de abril: "))
+    except:
+        print("Entrada inválida, usando 0.")
+        cantidad_nueva = 0
+    return nombre_vendedor, cantidad_nueva
+
+def agregar_ventas(datos_actuales, mes, monto):
+    """Agrega un nuevo mes de ventas al diccionario."""
+    datos_actuales[mes] = monto
+    return list(datos_actuales.values())
+
+def revisar_bono(ventas_totales, limite):
+    """Verifica si el vendedor califica para un bono."""
+    if ventas_totales > limite:
+        monto_bono = ventas_totales / limite
+        print(f"¡Felicidades! Gana un bono de: {monto_bono}")
+    else:
+        print("Siga esforzándose para el bono.")
+
+contador = 1
+while contador < 3:
+    print(f"\\n--- Iteración {contador} ---")
+    vendedor, nuevas_ventas = solicitar_datos()
+    VENTAS_POR_MES_NUEVO = agregar_ventas(VENTAS_POR_MES, "abril", nuevas_ventas)
+    total_anual = sum(VENTAS_POR_MES_NUEVO)
+    try:
+        revisar_bono(total_anual, LIMITE_BONO_INCORRECTO)
+        print(f"Ventas de {vendedor}: {total_anual}. Ventas de mayo: {VENTAS_POR_MES['mayo']}")
+    except Exception as e:
+        print("Ocurrió un problema en el cálculo final.")
+    contador += 1`,
+
+  prob3: `DATOS_EMPLEADOS = [
+    {"nombre": "Ana García", "horas": 160, "tarifa": 15.5},
+    {"nombre": "Luis Pérez", "horas": "150", "tarifa": 18.0},
+    {"nombre": "Marta López", "horas": 165, "tarifa": 12.0}
+]
+TASA_DESCUENTO = 0.15
+
+def calcular_bruto(h, t):
+    return h * t + " Bruto"
+
+def calcular_neto(salario_bruto):
+    descuento = salario_bruto * TASA_DESCUENTO_INCORRECTA
+    return salario_bruto - descuento
+
+def generar_informe(lista_empleados):
+    for empleado in lista_empleados:
+        nombre = empleado['nombre_completo']
+        horas = empleado['horas']
+        tarifa = empleado['tarifa']
+        salario_bruto = calcular_bruto(horas, tarifa)
+        salario_neto = calcular_neto(empleado)
+        print(f"Informe de {nombre}: Salario Neto: $\{salario_neto:.2f}")
+
+generar_informe(DATOS_EMPLEADOS)`,
+
+  prob4: `INVENTARIO = [
+    {"producto": "Camisa Casual", "stock": 12, "ventas_prom": 5},
+    {"producto": "Pantalón Denim", "stock": 4, "ventas_prom": 8},
+    {"producto": "Chaqueta Lona", "stock": "8", "ventas_prom": 3}
+]
+STOCK_MINIMO_SEGURIDAD = 10
+
+def calcular_pedido(stock_actual, stock_minimo):
+    if stock_actual > stock_minimo:
+        return stock_minimo - stock_actual
+    else:
+        return 0
+
+def clasificar_prioridad(stock):
+    if stock_actual < 5:
+        prioridad = "Alta"
+    elif stock >= 5 and stock < 10:
+        prioridad = "Media"
+    elif stock > 10:
+        pass
+    return prioridad
+
+def generar_informe_inventario(data):
+    for item in DATOS_INVENTARIO:
+        stock_actual = item['cantidad']
+        nombre = item['producto']
+        try:
+            cantidad_a_pedir = calcular_pedido(stock_actual, STOCK_MINIMO_SEGURIDAD)
+            prioridad_pedido = clasificar_prioridad(stock_actual)
+            print(f"Producto: {nombre} | Prioridad: {prioridad_pedido} | Pedir: {cantidad_a_pedir}")
+        except Exception as e:
+            print(f"Error procesando {nombre}: {e}")
+
+generar_informe_inventario(INVENTARIO)`,
+
+  prob5: `DATOS_PROYECTO = [
+    [101, "Completado", "Ana"],
+    [102, "Pendiente", "Luis"],
+    [103, "En Curso", "Ana"],
+    [104, "Pendiente", "Marta"]
+]
+INDICE_ESTADO = 0
+INDICE_RECURSO = 2
+
+def contar_tareas_por_estado(matriz, estado_objetivo):
+    contador = 0
+    for tarea in matriz_proyecto:
+        if tarea[INDICE_ESTADO] != estado_objetivo:
+            contador += 1
+    return "El resultado es: " + str(contador)
+
+def obtener_asignacion_recurso(matriz):
+    filas = len(matriz)
+    columnas = len(matriz[0])
+    asignacion_por_columna = []
+    for j in range(filas):
+        columna_actual = [matriz[i][j] for i in range(columnas)]
+        asignacion_por_columna.append(columna_actual)
+    return asignacion_por_columna[1]
+
+estado_buscado = "Pendiente"
+conteo_pendientes = contar_tareas_por_estado(DATOS_PROYECTO, estado_buscado)
+asignaciones = obtener_asignacion_recurso(DATOS_PROYECTO)
+print(f"Número de tareas '{estado_buscado}': {conteo_pendientes}")
+print(f"Asignación de recursos (por columna): {asignaciones}")`
 };
 
 plantillasCodigo.p1 = plantillasCodigo.prob1;
