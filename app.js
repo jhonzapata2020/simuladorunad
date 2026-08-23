@@ -598,22 +598,95 @@ function crearInsignia(nom, documento, grupo){
 </svg>`;
 }
 
+function verificarErroresAtrapados(salidaConsola) {
+  if (!salidaConsola) return false;
+  const textoLower = salidaConsola.toLowerCase();
+  const patronErrores = [
+    "ocurrió un problema",
+    "ocurrio un problema",
+    "entrada inválida",
+    "entrada invalida",
+    "error en",
+    "error procesando",
+    "traceback",
+    "exception",
+    "valueerror",
+    "typeerror",
+    "nameerror",
+    "indexerror",
+    "keyerror",
+    "zerodivisionerror",
+    "syntaxerror",
+    "indentationerror",
+    "unboundlocalerror",
+    "attributeerror"
+  ];
+
+  return patronErrores.some(patron => textoLower.includes(patron));
+}
+
+function verificarCodigoEsPlantillaSinModificar(codigoFuente) {
+  if (!codigoFuente) return false;
+  const codigoNormalizado = codigoFuente.trim();
+
+  const clavesProblemas = ['prob1', 'prob2', 'prob3', 'prob4', 'prob5', 'p1', 'p2', 'p3', 'p4', 'p5'];
+
+  for (const key of clavesProblemas) {
+    if (typeof plantillasCodigo !== 'undefined' && plantillasCodigo[key] && plantillasCodigo[key].trim() === codigoNormalizado) {
+      return true;
+    }
+  }
+
+  const selectProb = document.getElementById('select-problema');
+  if (selectProb && selectProb.value && selectProb.value !== 'libre' && selectProb.value !== 'ejemplo_input') {
+    const valSel = selectProb.value;
+    if (typeof plantillasCodigo !== 'undefined' && plantillasCodigo[valSel] && plantillasCodigo[valSel].trim() === codigoNormalizado) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function validarEmisionInsignia(huboError, salidaConsola, codigoFuente) {
-  if (huboError) return false;
+  if (huboError) return { valida: false, motivo: "error_ejecucion" };
 
+  // 1. Verificar si el código es idéntico a la plantilla sin depurar
+  if (verificarCodigoEsPlantillaSinModificar(codigoFuente)) {
+    return {
+      valida: false,
+      motivo: "plantilla_sin_modificar",
+      mensaje: "⚠️ Debes depurar y corregir los errores del ejercicio para obtener la insignia."
+    };
+  }
+
+  // 2. Verificar si hay errores internos o advertencias atrapadas en try/except
+  if (verificarErroresAtrapados(salidaConsola)) {
+    return {
+      valida: false,
+      motivo: "errores_atrapados",
+      mensaje: "⚠️ Advertencia: El código terminó con errores internos o advertencias atrapadas en bloques try/except. Corrige la lógica para obtener la insignia."
+    };
+  }
+
+  // 3. Verificar salida visible y mínimo 3 líneas reales de código
   const tieneSalidaVisible = (salidaConsola || "").trim().length > 0;
-
   const lineasReales = (codigoFuente || "")
     .trim()
     .split('\n')
     .filter(l => l.trim() && !l.trim().startsWith('#'));
   const tieneMinimoLineas = lineasReales.length >= 3;
 
-  return tieneSalidaVisible && tieneMinimoLineas;
+  if (!tieneSalidaVisible || !tieneMinimoLineas) {
+    return { valida: false, motivo: "lineas_o_salida_insuficientes" };
+  }
+
+  return { valida: true };
 }
 
 function mostrarInsignia(huboError = false, salidaConsola = "", codigoFuente = ""){
-  if (!validarEmisionInsignia(huboError, salidaConsola, codigoFuente)) {
+  const validacion = validarEmisionInsignia(huboError, salidaConsola, codigoFuente);
+  if (!validacion.valida) {
     ocultarInsignia();
     return;
   }
@@ -820,6 +893,17 @@ finally:
       texto += "\nMENSAJES ADICIONALES:\n" + stderr;
     }
 
+    const resultadoInsignia = validarEmisionInsignia(false, stdout + "\n" + stderr, codigoActual);
+
+    if (!resultadoInsignia.valida) {
+      if (resultadoInsignia.mensaje) {
+        texto += "\n\n" + resultadoInsignia.mensaje;
+      }
+      ocultarInsignia();
+    } else {
+      mostrarInsignia(false, stdout, codigoActual);
+    }
+
     setConsole(texto,"console-ok");
     setEstadoMotor("✅ Motor Python: listo", "ready");
     const btnEjOk = $("btn-ejecutar") || $("btnEjecutar");
@@ -831,7 +915,6 @@ finally:
     if(btnIr) btnIr.style.display = "none";
     if(btnExp) btnExp.style.display = "none";
     actualizarNumerosLinea();
-    mostrarInsignia(false, stdout, codigoActual);
 
   }catch(error){
     sesionActiva = false;
