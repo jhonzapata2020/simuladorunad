@@ -492,13 +492,99 @@ button:disabled {
   border-color: #1e293b;
 }
 
-.editor-card .panel-head {
-  background: #0d172a;
-  border-bottom-color: #1e293b;
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  gap: 12px;
 }
 
-.editor-card .panel-head h2 {
-  color: #f1f5f9;
+.editor-toolbar-left, .editor-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mac-dots {
+  display: flex;
+  gap: 6px;
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.red { background: #ef4444; }
+.dot.yellow { background: #f59e0b; }
+.dot.green { background: #10b981; }
+
+.editor-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  letter-spacing: 0.3px;
+}
+
+.typing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #34d399;
+  white-space: nowrap;
+}
+
+.typing-badge.pasted-mode {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.editor-select {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.editor-select:hover, .editor-select:focus {
+  border-color: #38bdf8;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
 }
 
 .editor-shell {

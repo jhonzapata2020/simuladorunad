@@ -22,10 +22,7 @@ const lineNumbers = $("lineNumbers");
 const estadoMotor = $("estadoMotor");
 const consoleText = $("consoleText");
 const inputArea = $("inputArea");
-const promptLabel = $("promptLabel");
-const terminalInput = $("terminalInput");
-const cursorMsg = $("cursorMsg");
-const btnEjecutar = $("btnEjecutar");
+const btnEjecutar = $("btnEjecutar") || $("btn-ejecutar");
 const btnIrLinea = $("btnIrLinea");
 const btnExplicarError = $("btnExplicarError");
 const explainPanel = $("explainPanel");
@@ -42,13 +39,15 @@ function escXML(v){
 }
 
 function actualizarPorcentajes() {
-  const badgeTipeo = $("typingStats") || document.getElementById('badge-tipeo');
+  const badgeTipeo = $("badge-tipeo") || $("typingStats");
   const total = totalCaracteresTipeados + totalCaracteresPegados;
+  const textSpan = badgeTipeo?.querySelector(".badge-text");
   
   if (total === 0 || !codigo || !codigo.value.trim()) {
     if (badgeTipeo) {
-      badgeTipeo.className = "typing-stat-badge";
-      badgeTipeo.textContent = "✍️ Tipeo: 100% | Pegado: 0%";
+      badgeTipeo.className = "typing-badge";
+      if (textSpan) textSpan.textContent = "Tipeo: 100%";
+      else badgeTipeo.textContent = "✍️ Tipeo: 100%";
     }
     return;
   }
@@ -56,14 +55,15 @@ function actualizarPorcentajes() {
   const porcentajeManual = Math.max(0, Math.min(100, Math.round((totalCaracteresTipeados / total) * 100)));
   const porcentajePegado = 100 - porcentajeManual;
   
-  // Actualizar badge en UI
   if (badgeTipeo) {
     if (porcentajeManual >= 50) {
-      badgeTipeo.className = "typing-stat-badge";
-      badgeTipeo.textContent = `✍️ Tipeo: ${porcentajeManual}% | Pegado: ${porcentajePegado}%`;
+      badgeTipeo.className = "typing-badge";
+      if (textSpan) textSpan.textContent = `Tipeo: ${porcentajeManual}%`;
+      else badgeTipeo.textContent = `✍️ Tipeo: ${porcentajeManual}%`;
     } else {
-      badgeTipeo.className = "typing-stat-badge pasted-mode";
-      badgeTipeo.textContent = `📋 Pegado: ${porcentajePegado}% | Tipeo: ${porcentajeManual}%`;
+      badgeTipeo.className = "typing-badge pasted-mode";
+      if (textSpan) textSpan.textContent = `Pegado: ${porcentajePegado}%`;
+      else badgeTipeo.textContent = `📋 Pegado: ${porcentajePegado}%`;
     }
   }
 }
@@ -825,11 +825,11 @@ terminalInput.addEventListener("keydown",async(e)=>{
   }
 });
 
-btnEjecutar.addEventListener("click",async()=>{
+(btnEjecutar || $("btn-ejecutar"))?.addEventListener("click",async()=>{
   await ejecutarSesion(false);
 });
 
-$("btnReiniciar").addEventListener("click",()=>{
+$("btnReiniciar")?.addEventListener("click",()=>{
   entradasUsuario = [];
   codigoActual = "";
   sesionActiva = false;
@@ -838,7 +838,7 @@ $("btnReiniciar").addEventListener("click",()=>{
   ocultarInsignia();
   btnIrLinea.style.display = "none";
   btnExplicarError.style.display = "none";
-  btnEjecutar.disabled = false;
+  if(btnEjecutar) btnEjecutar.disabled = false;
   if(pyodide){
     setEstadoMotor("✅ Motor Python: listo", "ready");
   } else {
@@ -848,7 +848,7 @@ $("btnReiniciar").addEventListener("click",()=>{
   actualizarNumerosLinea();
 });
 
-$("btnEjemplo").addEventListener("click",()=>{
+$("btnEjemplo")?.addEventListener("click",()=>{
   codigo.value =
 `print("Promedio de tres notas")
 
@@ -869,9 +869,10 @@ else:
   totalCaracteresPegados = 0;
   actualizarNumerosLinea();
   actualizarPorcentajes();
+  guardarEnLocalStorage();
 });
 
-$("btnLimpiar").addEventListener("click",()=>{
+($("btnLimpiar") || $("btn-limpiar"))?.addEventListener("click",()=>{
   codigo.value = "";
   entradasUsuario = [];
   codigoActual = "";
@@ -882,13 +883,14 @@ $("btnLimpiar").addEventListener("click",()=>{
   ocultarInsignia();
   btnIrLinea.style.display = "none";
   btnExplicarError.style.display = "none";
-  btnEjecutar.disabled = false;
+  if(btnEjecutar) btnEjecutar.disabled = false;
   setConsole("Editor limpio. Escribe un programa y presiona ▶ Ejecutar.","console-info");
   actualizarNumerosLinea();
   actualizarPorcentajes();
+  guardarEnLocalStorage();
 });
 
-$("btnDescargar").addEventListener("click",()=>{
+$("btnDescargar")?.addEventListener("click",()=>{
   if(!ultimoSVG) return;
 
   const blob = new Blob([ultimoSVG],{
@@ -925,7 +927,22 @@ if promedio >= 3:
 else:
     print("Resultado: No aprobado")`,
 
-  p1: `# PROBLEMA 1: Cine Full - Sistema de Boletería
+  ejemplo_input: `print("Promedio de tres notas")
+
+nota1 = float(input("Ingrese la nota 1: "))
+nota2 = float(input("Ingrese la nota 2: "))
+nota3 = float(input("Ingrese la nota 3: "))
+
+promedio = (nota1 + nota2 + nota3) / 3
+
+print("Promedio:", round(promedio, 2))
+
+if promedio >= 3:
+    print("Resultado: Aprobado")
+else:
+    print("Resultado: No aprobado")`,
+
+  prob1: `# PROBLEMA 1: Cine Full - Sistema de Boletería
 # Depurar los errores de tipos, sintaxis y lógica en la venta de boletas.
 
 print("=== BIENVENIDO A CINE FULL ===")
@@ -947,7 +964,7 @@ else:
 precio_final = precio_base * (1 - descuento)
 print("Precio final a pagar: $" + precio_final)  # ERROR: concatenar str con float sin str()`,
 
-  p2: `# PROBLEMA 2: Registro de Ventas y Comisiones
+  prob2: `# PROBLEMA 2: Registro de Ventas y Comisiones
 # Corregir errores de conversión, cálculo de IVA y variables no definidas.
 
 total_ventas = 0
@@ -1032,9 +1049,13 @@ if roi_porcentaje = 20:
     print("Dictamen: Proyecto ALTAMENTE VIABLE")
 elif roi_porcentaje > 0:
     print("Dictamen: Proyecto VIABLE con retorno moderado")
-else:
-    print("Dictamen: Proyecto NO VIABLE (Riesgo alto)")`
 };
+
+PLANTILLAS_PROBLEMAS.prob1 = PLANTILLAS_PROBLEMAS.p1;
+PLANTILLAS_PROBLEMAS.prob2 = PLANTILLAS_PROBLEMAS.p2;
+PLANTILLAS_PROBLEMAS.prob3 = PLANTILLAS_PROBLEMAS.p3;
+PLANTILLAS_PROBLEMAS.prob4 = PLANTILLAS_PROBLEMAS.p4;
+PLANTILLAS_PROBLEMAS.prob5 = PLANTILLAS_PROBLEMAS.p5;
 
 /* ---------- AUTO-GUARDADO EN LOCALSTORAGE ---------- */
 const STORAGE_KEYS = {
