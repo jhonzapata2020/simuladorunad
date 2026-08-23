@@ -619,33 +619,38 @@ async function ejecutarSesion(esReanudacion=false){
   if(!esReanudacion) ocultarExplicacion();
 
   if(!esReanudacion){
-    codigoActual = codigo.value;
+    codigoActual = getEditorValue();
     entradasUsuario = [];
     lineaErrorActual = null;
-    btnIrLinea.style.display = "none";
+    const btnIr = $("btnIrLinea");
+    if(btnIr) btnIr.style.display = "none";
     actualizarNumerosLinea();
   }
 
-  const nom = nombre.value.trim();
-  const documento = cc.value.trim();
+  const elNom = $("nombre");
+  const elCc = $("cc");
+  const valNom = elNom ? elNom.value.trim() : "";
+  const valCc = elCc ? elCc.value.trim() : "";
 
-  if(!nom){
+  if(!valNom){
     alert("Ingrese el nombre completo del estudiante.");
-    nombre.focus();
+    elNom?.focus();
     return;
   }
-  if(!documento){
+  if(!valCc){
     alert("Ingrese la cédula o CC.");
-    cc.focus();
+    elCc?.focus();
     return;
   }
   if(!codigoActual.trim()){
     alert("Ingrese código Python.");
-    codigo.focus();
+    const elCod = $("codigo") || document.querySelector("#editor, textarea");
+    elCod?.focus();
     return;
   }
 
-  btnEjecutar.disabled = true;
+  const btnEj = $("btn-ejecutar") || $("btnEjecutar");
+  if(btnEj) btnEj.disabled = true;
   sesionActiva = true;
 
   try{
@@ -746,7 +751,8 @@ finally:
       setConsole(texto,"console-info");
       mostrarInput(payload);
       setEstadoMotor("⌨️ Python: esperando entrada", "input");
-      btnEjecutar.disabled = true;
+      const btnEjInput = $("btn-ejecutar") || $("btnEjecutar");
+      if(btnEjInput) btnEjInput.disabled = true;
       return;
     }
 
@@ -766,7 +772,8 @@ finally:
       prepararNavegacionError(payload);
 
       setEstadoMotor("❌ Python: error", "error");
-      btnEjecutar.disabled = false;
+      const btnEjErr = $("btn-ejecutar") || $("btnEjecutar");
+      if(btnEjErr) btnEjErr.disabled = false;
       sesionActiva = false;
       ocultarInsignia();
       return;
@@ -786,17 +793,21 @@ finally:
 
     setConsole(texto,"console-ok");
     setEstadoMotor("✅ Motor Python: listo", "ready");
-    btnEjecutar.disabled = false;
+    const btnEjOk = $("btn-ejecutar") || $("btnEjecutar");
+    if(btnEjOk) btnEjOk.disabled = false;
     sesionActiva = false;
     lineaErrorActual = null;
-    btnIrLinea.style.display = "none";
-    btnExplicarError.style.display = "none";
+    const btnIr = $("btnIrLinea");
+    const btnExp = $("btnExplicarError");
+    if(btnIr) btnIr.style.display = "none";
+    if(btnExp) btnExp.style.display = "none";
     actualizarNumerosLinea();
     mostrarInsignia();
 
   }catch(error){
     sesionActiva = false;
-    btnEjecutar.disabled = false;
+    const btnEjCatch = $("btn-ejecutar") || $("btnEjecutar");
+    if(btnEjCatch) btnEjCatch.disabled = false;
     ocultarInput();
     ocultarInsignia();
     setEstadoMotor("❌ Motor Python: error", "error");
@@ -825,270 +836,54 @@ terminalInput.addEventListener("keydown",async(e)=>{
   }
 });
 
-(btnEjecutar || $("btn-ejecutar"))?.addEventListener("click",async()=>{
+(document.getElementById('btn-ejecutar') || document.getElementById('btnEjecutar'))?.addEventListener("click", async () => {
   await ejecutarSesion(false);
 });
 
-$("btnReiniciar")?.addEventListener("click",()=>{
-  entradasUsuario = [];
-  codigoActual = "";
-  sesionActiva = false;
-  lineaErrorActual = null;
-  ocultarInput();
-  ocultarInsignia();
-  btnIrLinea.style.display = "none";
-  btnExplicarError.style.display = "none";
-  if(btnEjecutar) btnEjecutar.disabled = false;
-  if(pyodide){
-    setEstadoMotor("✅ Motor Python: listo", "ready");
-  } else {
-    setEstadoMotor("⏳ Motor Python: sin iniciar", "idle");
-  }
-  setConsole("Sesión reiniciada. Presiona ▶ Ejecutar para comenzar.","console-info");
-  actualizarNumerosLinea();
-});
-
-$("btnEjemplo")?.addEventListener("click",()=>{
-  codigo.value =
-`print("Promedio de tres notas")
-
-nota1 = float(input("Ingrese la nota 1: "))
-nota2 = float(input("Ingrese la nota 2: "))
-nota3 = float(input("Ingrese la nota 3: "))
-
-promedio = (nota1 + nota2 + nota3) / 3
-
-print("Promedio:", round(promedio, 2))
-
-if promedio >= 3:
-    print("Resultado: Aprobado")
-else:
-    print("Resultado: No aprobado")`;
-  lineaErrorActual = null;
-  totalCaracteresTipeados = codigo.value.length;
-  totalCaracteresPegados = 0;
-  actualizarNumerosLinea();
-  actualizarPorcentajes();
-  guardarEnLocalStorage();
-});
-
-const btnLimpiar = $("btn-limpiar") || $("btnLimpiar");
-
-btnLimpiar?.addEventListener("click", () => {
-  // 1. Borrar texto del editor (CodeMirror/Ace o textarea #codigo)
-  if (window.editor && typeof window.editor.setValue === "function") {
-    window.editor.setValue("");
-  } else {
-    const txtArea = $("codigo") || document.querySelector("#editor, textarea");
-    if (txtArea) txtArea.value = "";
-  }
-
-  // 2. Reiniciar contadores y variables de ejecución
-  entradasUsuario = [];
-  codigoActual = "";
-  lineaErrorActual = null;
-  totalCaracteresTipeados = 0;
-  totalCaracteresPegados = 0;
-
-  // 3. Ocultar paneles auxiliares
-  ocultarInput();
-  ocultarInsignia();
-  ocultarExplicacion();
-  if (btnIrLinea) btnIrLinea.style.display = "none";
-  if (btnExplicarError) btnExplicarError.style.display = "none";
-  if (btnEjecutar) btnEjecutar.disabled = false;
-
-  // 4. Limpiar clave guardada en localStorage y resetear selector de problemas a libre
-  try {
-    localStorage.removeItem("pythonlab_code");
-    localStorage.removeItem("unad_python_code");
-    const selectProb = $("select-problema");
-    if (selectProb) {
-      selectProb.value = "libre";
-      localStorage.setItem("pythonlab_problema", "libre");
-    }
-  } catch (e) {
-    console.warn("No se pudo limpiar localStorage:", e);
-  }
-
-  // 5. Actualizar consola y métricas visuales
-  setConsole("Editor limpio. Escribe un programa y presiona ▶ Ejecutar.", "console-info");
-  actualizarNumerosLinea();
-  actualizarPorcentajes();
-
-  // 6. Devolver foco al editor para escribir de inmediato
-  setTimeout(() => {
-    const txtArea = $("codigo") || document.querySelector("#editor, textarea");
-    txtArea?.focus();
-  }, 50);
-});
-
-$("btnDescargar")?.addEventListener("click",()=>{
-  if(!ultimoSVG) return;
-
-  const blob = new Blob([ultimoSVG],{
-    type:"image/svg+xml;charset=utf-8"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const docSeguro = cc.value.trim().replace(/[^0-9A-Za-z_-]/g,"_");
-
-  a.href = url;
-  a.download = `insignia_python_${docSeguro || "estudiante"}.svg`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-});
-
-/* ---------- PLANTILLAS DE PROBLEMAS ---------- */
-const PLANTILLAS_PROBLEMAS = {
-  libre: `print("Promedio de tres notas")
-
-nota1 = float(input("Ingrese la nota 1: "))
-nota2 = float(input("Ingrese la nota 2: "))
-nota3 = float(input("Ingrese la nota 3: "))
-
-promedio = (nota1 + nota2 + nota3) / 3
-
-print("Promedio:", round(promedio, 2))
-
-if promedio >= 3:
-    print("Resultado: Aprobado")
-else:
-    print("Resultado: No aprobado")`,
-
-  ejemplo_input: `print("Promedio de tres notas")
-
-nota1 = float(input("Ingrese la nota 1: "))
-nota2 = float(input("Ingrese la nota 2: "))
-nota3 = float(input("Ingrese la nota 3: "))
-
-promedio = (nota1 + nota2 + nota3) / 3
-
-print("Promedio:", round(promedio, 2))
-
-if promedio >= 3:
-    print("Resultado: Aprobado")
-else:
-    print("Resultado: No aprobado")`,
-
-  prob1: `# PROBLEMA 1: Cine Full - Sistema de Boletería
-# Depurar los errores de tipos, sintaxis y lógica en la venta de boletas.
-
-print("=== BIENVENIDO A CINE FULL ===")
-edad = input("Ingrese la edad del cliente: ")  # ERROR: debe convertirse a int
-dia = input("Ingrese el día de la semana (ej: miercoles): ").lower()
-
-precio_base = 15000
-
-# Error de indentación y sintaxis
-if edad < 12:
-    descuento = 0.50
-elif edad >= 60:
-    descuento = 0.40
-elif dia == "miércoles" or dia == "miercoles"
-    descuento = 0.20  # ERROR: falta : al final de la línea anterior
-else:
-    descuento = 0.0
-
-precio_final = precio_base * (1 - descuento)
-print("Precio final a pagar: $" + precio_final)  # ERROR: concatenar str con float sin str()`,
-
-  prob2: `# PROBLEMA 2: Registro de Ventas y Comisiones
-# Corregir errores de conversión, cálculo de IVA y variables no definidas.
-
-total_ventas = 0
-cant_productos = int(input("¿Cuántos productos registrará?: "))
-
-for i in range(1, cant_productos + 1):
-    precio = float(input("Ingrese precio del producto " + str(i) + ": "))
-    total_ventas = total_ventas + precio
-
-iva = total_ventas * 0.19
-total_con_iva = total_ventas + IVA  # ERROR: NameError variable IVA no definida (debe ser iva)
-
-if total_ventas > 1000000:
-    comision = total_ventas * 0.05
-else:
-    comision = total_ventas * 0.02
-
-print("Total Ventas (Sin IVA): $" + str(round(total_ventas, 2)))
-print("IVA (19%): $" + str(round(iva, 2)))
-print("Total General: $" + str(round(total_con_iva, 2)))
-print("Comisión del Vendedor: $" + str(round(comision, 2)))`,
-
-  p3: `# PROBLEMA 3: Gestión de Nómina y RRHH
-# Corregir errores en deducciones de ley y retorno/llamada a funciones.
-
-def calcular_salario_neto(salario_base, horas_extra):
-    # Salud 4% y Pensión 4% (Total 8% deducción)
-    deducciones = salario_base * 0.08
-    valor_hora_extra = (salario_base / 160) * 1.5
-    pago_extras = horas_extra * valor_hora_extra
-    
-    salario_neto = salario_base - deducciones + pago_extras
-    return salario_neto
-
-nombre_emp = input("Nombre del empleado: ")
-sueldo_base = float(input("Salario base ($): "))
-extras = int(input("Horas extra trabajadas: "))
-
-# ERROR: Orden incorrecto de argumentos al llamar la función
-neto = calcular_salario_neto(extras, sueldo_base) 
-
-print("Empleado:", nombre_emp)
-print("Salario Neto a Pagar: $" + str(round(neto, 2)))`,
-
-  p4: `# PROBLEMA 4: Control de Inventario y Stock
-# Depurar errores en listas e índice fuera de rango.
-
-productos = ["Arroz", "Frijol", "Aceite", "Leche"]
-stock = [50, 12, 8, 30]
-stock_minimo = 10
-
-print("=== REPORTE DE INVENTARIO Y REABASTECIMIENTO ===")
-
-# ERROR: IndexError al iterar la lista (range llega a len(productos) + 1)
-for i in range(0, len(productos) + 1):
-    prod = productos[i]
-    cant = stock[i]
-    
-    if cant < stock_minimo:
-        estado = "⚠️ ALERTA: Reabastecer urgente"
-    else:
-        estado = "✅ Stock Suficiente"
-        
-    print(prod + ": " + str(cant) + " unidades -> " + estado)`,
-
-  p5: `# PROBLEMA 5: Evaluación de Viabilidad de Proyectos
-# Corregir errores de operador de asignación vs comparación.
-
-print("=== EVALUACIÓN FINANCIERA DE PROYECTO ===")
-
-nombre_proyecto = input("Nombre del proyecto: ")
-inversion_inicial = float(input("Inversión Inicial ($): "))
-retorno_estimado = float(input("Retorno Estimado Anual ($): "))
-anios = int(input("Años de ejecución: "))
-
-roi_porcentaje = ((retorno_estimado * anios) - inversion_inicial) / inversion_inicial * 100
-
-print("ROI Estimado:", round(roi_porcentaje, 2), "%")
-
-# ERROR: Uso del operador de asignación '=' en lugar de comparación '==' o '>='
-if roi_porcentaje = 20:
-    print("Dictamen: Proyecto ALTAMENTE VIABLE")
-elif roi_porcentaje > 0:
-    print("Dictamen: Proyecto VIABLE con retorno moderado")
+/* ---------- DICCIONARIO DE PLANTILLAS DE CÓDIGO ---------- */
+const plantillasCodigo = {
+  libre: '# Escribe tu código Python aquí\nprint("¡Hola Mundo!")',
+  ejemplo_input: 'nombre = input("¿Cómo te llamas? ")\nprint(f"Hola, {nombre}!")',
+  prob1: `# Problema 1: Cine Full\nFILAS = 5\nASIENTOS_POR_FILA = 10\n\ndef inicializar_sala():\n    fila = [0] * ASIENTOS_POR_FILA\n    sala = [fila] * FILAS\n    return sala\n\n# Continúa el código aquí...`,
+  prob2: `# Problema 2: Ventas\nVENTAS_POR_MES = {"enero": 1500, "febrero": 2200, "marzo": 1800}\nLIMITE_BONO = 5000\n\n# Continúa el código aquí...`,
+  prob3: `# Problema 3: RRHH\nDATOS_EMPLEADOS = [\n    {"nombre": "Ana García", "horas": 160, "tarifa": 15.5},\n    {"nombre": "Luis Pérez", "horas": "150", "tarifa": 18.0},\n    {"nombre": "Marta López", "horas": 165, "tarifa": 12.0}\n]\n\n# Continúa el código aquí...`,
+  prob4: `# Problema 4: Inventario\nINVENTARIO = [\n    {"producto": "Camisa Casual", "stock": 12, "ventas_prom": 5},\n    {"producto": "Pantalón Denim", "stock": 4, "ventas_prom": 8},\n    {"producto": "Chaqueta Lona", "stock": "8", "ventas_prom": 3}\n]\n\n# Continúa el código aquí...`,
+  prob5: `# Problema 5: Proyectos\nDATOS_PROYECTO = [\n    [101, "Completado", "Ana"],\n    [102, "Pendiente", "Luis"],\n    [103, "En Curso", "Ana"],\n    [104, "Pendiente", "Marta"]\n]\n\n# Continúa el código aquí...`
 };
 
-PLANTILLAS_PROBLEMAS.prob1 = PLANTILLAS_PROBLEMAS.p1;
-PLANTILLAS_PROBLEMAS.prob2 = PLANTILLAS_PROBLEMAS.p2;
-PLANTILLAS_PROBLEMAS.prob3 = PLANTILLAS_PROBLEMAS.p3;
-PLANTILLAS_PROBLEMAS.prob4 = PLANTILLAS_PROBLEMAS.p4;
-PLANTILLAS_PROBLEMAS.prob5 = PLANTILLAS_PROBLEMAS.p5;
+plantillasCodigo.p1 = plantillasCodigo.prob1;
+plantillasCodigo.p2 = plantillasCodigo.prob2;
+plantillasCodigo.p3 = plantillasCodigo.prob3;
+plantillasCodigo.p4 = plantillasCodigo.prob4;
+plantillasCodigo.p5 = plantillasCodigo.prob5;
+
+const PLANTILLAS_PROBLEMAS = plantillasCodigo;
+
+// Función auxiliar para setear texto en el editor (soporta CodeMirror y Textarea)
+function setEditorValue(texto) {
+  if (window.editor && typeof window.editor.setValue === 'function') {
+    window.editor.setValue(texto);
+  } else {
+    const el = document.querySelector('#codigo, #editor, textarea');
+    if (el) el.value = texto;
+  }
+}
+
+// Función auxiliar para obtener texto
+function getEditorValue() {
+  if (window.editor && typeof window.editor.getValue === 'function') {
+    return window.editor.getValue();
+  }
+  const el = document.querySelector('#codigo, #editor, textarea');
+  return el ? el.value : '';
+}
+
+function ejecutarPython(codigoTexto) {
+  if (codigoTexto !== undefined && codigoTexto !== null) {
+    setEditorValue(codigoTexto);
+  }
+  ejecutarSesion(false);
+}
 
 /* ---------- AUTO-GUARDADO EN LOCALSTORAGE ---------- */
 const STORAGE_KEYS = {
@@ -1101,11 +896,16 @@ const STORAGE_KEYS = {
 
 function guardarEnLocalStorage() {
   try {
-    if (codigo) localStorage.setItem(STORAGE_KEYS.CODE, codigo.value);
-    if (nombre) localStorage.setItem(STORAGE_KEYS.NOMBRE, nombre.value);
-    if (cc) localStorage.setItem(STORAGE_KEYS.CC, cc.value);
-    if (inputGrupo) localStorage.setItem(STORAGE_KEYS.GRUPO, inputGrupo.value);
-    const selectProb = $("select-problema");
+    const val = getEditorValue();
+    localStorage.setItem(STORAGE_KEYS.CODE, val);
+    localStorage.setItem("unad_python_code", val);
+    const elNom = document.getElementById("nombre");
+    const elCc = document.getElementById("cc");
+    const elGrupo = document.getElementById("input-grupo");
+    if (elNom) localStorage.setItem(STORAGE_KEYS.NOMBRE, elNom.value);
+    if (elCc) localStorage.setItem(STORAGE_KEYS.CC, elCc.value);
+    if (elGrupo) localStorage.setItem(STORAGE_KEYS.GRUPO, elGrupo.value);
+    const selectProb = document.getElementById("select-problema");
     if (selectProb) localStorage.setItem(STORAGE_KEYS.PROBLEMA, selectProb.value);
   } catch (e) {
     console.warn("No se pudo guardar en localStorage:", e);
@@ -1114,85 +914,197 @@ function guardarEnLocalStorage() {
 
 function restaurarDesdeLocalStorage() {
   try {
+    const elNom = document.getElementById("nombre");
+    const elCc = document.getElementById("cc");
+    const elGrupo = document.getElementById("input-grupo");
+
     const savedNombre = localStorage.getItem(STORAGE_KEYS.NOMBRE);
     const savedCc = localStorage.getItem(STORAGE_KEYS.CC);
     const savedGrupo = localStorage.getItem(STORAGE_KEYS.GRUPO);
     const savedProb = localStorage.getItem(STORAGE_KEYS.PROBLEMA);
-    const savedCode = localStorage.getItem(STORAGE_KEYS.CODE);
+    const savedCode = localStorage.getItem(STORAGE_KEYS.CODE) || localStorage.getItem("unad_python_code");
 
-    if (savedNombre && nombre) nombre.value = savedNombre;
-    if (savedCc && cc) cc.value = savedCc;
-    if (savedGrupo && inputGrupo) inputGrupo.value = savedGrupo;
+    if (savedNombre && elNom) elNom.value = savedNombre;
+    if (savedCc && elCc) elCc.value = savedCc;
+    if (savedGrupo && elGrupo) elGrupo.value = savedGrupo;
 
-    const selectProb = $("select-problema");
+    const selectProb = document.getElementById("select-problema");
     if (savedProb && selectProb) {
       selectProb.value = savedProb;
     }
 
-    if (savedCode !== null && codigo) {
-      codigo.value = savedCode;
+    if (savedCode !== null && savedCode !== undefined && savedCode.trim().length > 0) {
+      setEditorValue(savedCode);
     }
   } catch (e) {
     console.warn("No se pudo restaurar de localStorage:", e);
   }
 }
 
-// Auto-guardado al escribir en los campos de estudiante
-[nombre, cc, inputGrupo].forEach(field => {
-  field?.addEventListener("input", guardarEnLocalStorage);
-});
+function reconectarEventosBarraEditor() {
+  // Evento del Selector
+  const selectProb = document.getElementById('select-problema');
+  if (selectProb) {
+    selectProb.onchange = (e) => {
+      const key = e.target.value;
+      if (plantillasCodigo[key] !== undefined) {
+        setEditorValue(plantillasCodigo[key]);
+        lineaErrorActual = null;
+        totalCaracteresTipeados = getEditorValue().length;
+        totalCaracteresPegados = 0;
+        actualizarNumerosLinea();
+        actualizarPorcentajes();
+        guardarEnLocalStorage();
+      }
+    };
+  }
 
-// Selector de Problemas / Plantillas
-const selectProblema = $("select-problema");
-if (selectProblema) {
-  selectProblema.addEventListener("change", (e) => {
-    const clave = e.target.value;
-    if (PLANTILLAS_PROBLEMAS[clave]) {
-      codigo.value = PLANTILLAS_PROBLEMAS[clave];
+  // Evento Limpiar
+  const btnLimpiar = document.getElementById('btn-limpiar') || document.getElementById('btnLimpiar');
+  if (btnLimpiar) {
+    btnLimpiar.onclick = () => {
+      setEditorValue('');
+      entradasUsuario = [];
+      codigoActual = "";
       lineaErrorActual = null;
-      btnIrLinea.style.display = "none";
-      ocultarExplicacion();
-      totalCaracteresTipeados = codigo.value.length;
+      totalCaracteresTipeados = 0;
       totalCaracteresPegados = 0;
+
+      ocultarInput();
+      ocultarInsignia();
+      ocultarExplicacion();
+
+      const btnIr = document.getElementById('btnIrLinea');
+      const btnExp = document.getElementById('btnExplicarError');
+      const btnEj = document.getElementById('btn-ejecutar') || document.getElementById('btnEjecutar');
+
+      if (btnIr) btnIr.style.display = "none";
+      if (btnExp) btnExp.style.display = "none";
+      if (btnEj) btnEj.disabled = false;
+
+      const sel = document.getElementById('select-problema');
+      if (sel) sel.value = 'libre';
+
+      try {
+        localStorage.removeItem("pythonlab_code");
+        localStorage.removeItem("unad_python_code");
+        localStorage.setItem("pythonlab_problema", "libre");
+      } catch (e) {
+        console.warn("No se pudo limpiar localStorage:", e);
+      }
+
+      setConsole("Editor limpio. Escribe un programa y presiona ▶ Ejecutar.", "console-info");
       actualizarNumerosLinea();
       actualizarPorcentajes();
-      guardarEnLocalStorage();
-    }
-  });
+
+      setTimeout(() => {
+        const el = document.querySelector('#codigo, #editor, textarea');
+        el?.focus();
+      }, 50);
+    };
+  }
+
+  // Evento Ejecutar
+  const btnEjecutar = document.getElementById('btn-ejecutar') || document.getElementById('btnEjecutar');
+  if (btnEjecutar) {
+    btnEjecutar.onclick = () => {
+      const codigoText = getEditorValue();
+      if (typeof ejecutarPython === 'function') {
+        ejecutarPython(codigoText);
+      } else {
+        ejecutarSesion(false);
+      }
+    };
+  }
+
+  // Evento Reiniciar consola
+  const btnReiniciar = document.getElementById('btnReiniciar');
+  if (btnReiniciar) {
+    btnReiniciar.onclick = () => {
+      entradasUsuario = [];
+      codigoActual = "";
+      sesionActiva = false;
+      lineaErrorActual = null;
+      ocultarInput();
+      ocultarInsignia();
+      const btnIr = document.getElementById('btnIrLinea');
+      const btnExp = document.getElementById('btnExplicarError');
+      const btnEj = document.getElementById('btn-ejecutar') || document.getElementById('btnEjecutar');
+      if (btnIr) btnIr.style.display = "none";
+      if (btnExp) btnExp.style.display = "none";
+      if (btnEj) btnEj.disabled = false;
+      if (pyodide) {
+        setEstadoMotor("✅ Motor Python: listo", "ready");
+      } else {
+        setEstadoMotor("⏳ Motor Python: sin iniciar", "idle");
+      }
+      setConsole("Sesión reiniciada. Presiona ▶ Ejecutar para comenzar.", "console-info");
+      actualizarNumerosLinea();
+    };
+  }
+
+  // Evento Descargar Insignia
+  const btnDescargar = document.getElementById('btnDescargar');
+  if (btnDescargar) {
+    btnDescargar.onclick = () => {
+      if (!ultimoSVG) return;
+      const blob = new Blob([ultimoSVG], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const elCc = document.getElementById("cc");
+      const docSeguro = elCc ? elCc.value.trim().replace(/[^0-9A-Za-z_-]/g, "_") : "estudiante";
+      a.href = url;
+      a.download = `insignia_python_${docSeguro || "estudiante"}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+  }
 }
 
-// Atajos de teclado en el editor (Tab para sangría, Ctrl+Enter / Cmd+Enter para ejecutar)
-codigo.addEventListener("keydown", (e) => {
-  if (e.key === "Tab") {
-    e.preventDefault();
-    const start = codigo.selectionStart;
-    const end = codigo.selectionEnd;
+// Reconexión al cargar DOM
+document.addEventListener("DOMContentLoaded", () => {
+  reconectarEventosBarraEditor();
+  restaurarDesdeLocalStorage();
 
-    codigo.value =
-      codigo.value.substring(0, start) +
-      "    " +
-      codigo.value.substring(end);
+  ["nombre", "cc", "input-grupo"].forEach(id => {
+    document.getElementById(id)?.addEventListener("input", guardarEnLocalStorage);
+  });
 
-    codigo.selectionStart = codigo.selectionEnd = start + 4;
-    actualizarNumerosLinea();
-    guardarEnLocalStorage();
-  } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-    e.preventDefault();
-    if (!btnEjecutar.disabled) {
-      ejecutarSesion(false);
-    }
+  const txtArea = document.querySelector('#codigo, #editor, textarea');
+  if (txtArea) {
+    txtArea.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = txtArea.selectionStart;
+        const end = txtArea.selectionEnd;
+        txtArea.value = txtArea.value.substring(0, start) + "    " + txtArea.value.substring(end);
+        txtArea.selectionStart = txtArea.selectionEnd = start + 4;
+        actualizarNumerosLinea();
+        guardarEnLocalStorage();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        const btnEj = document.getElementById('btn-ejecutar') || document.getElementById('btnEjecutar');
+        if (!btnEj || !btnEj.disabled) {
+          ejecutarPython(getEditorValue());
+        }
+      }
+    });
+
+    txtArea.addEventListener("input", () => {
+      guardarEnLocalStorage();
+    });
   }
 });
 
-codigo.addEventListener("input", () => {
-  guardarEnLocalStorage();
-});
-
 window.addEventListener("load", () => {
+  reconectarEventosBarraEditor();
   restaurarDesdeLocalStorage();
   actualizarNumerosLinea();
-  if (codigo && codigo.value.length > 0) {
-    totalCaracteresTipeados = codigo.value.length;
+  const val = getEditorValue();
+  if (val && val.length > 0) {
+    totalCaracteresTipeados = val.length;
     actualizarPorcentajes();
   }
 
