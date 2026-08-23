@@ -872,22 +872,55 @@ else:
   guardarEnLocalStorage();
 });
 
-($("btnLimpiar") || $("btn-limpiar"))?.addEventListener("click",()=>{
-  codigo.value = "";
+const btnLimpiar = $("btn-limpiar") || $("btnLimpiar");
+
+btnLimpiar?.addEventListener("click", () => {
+  // 1. Borrar texto del editor (CodeMirror/Ace o textarea #codigo)
+  if (window.editor && typeof window.editor.setValue === "function") {
+    window.editor.setValue("");
+  } else {
+    const txtArea = $("codigo") || document.querySelector("#editor, textarea");
+    if (txtArea) txtArea.value = "";
+  }
+
+  // 2. Reiniciar contadores y variables de ejecución
   entradasUsuario = [];
   codigoActual = "";
   lineaErrorActual = null;
   totalCaracteresTipeados = 0;
   totalCaracteresPegados = 0;
+
+  // 3. Ocultar paneles auxiliares
   ocultarInput();
   ocultarInsignia();
-  btnIrLinea.style.display = "none";
-  btnExplicarError.style.display = "none";
-  if(btnEjecutar) btnEjecutar.disabled = false;
-  setConsole("Editor limpio. Escribe un programa y presiona ▶ Ejecutar.","console-info");
+  ocultarExplicacion();
+  if (btnIrLinea) btnIrLinea.style.display = "none";
+  if (btnExplicarError) btnExplicarError.style.display = "none";
+  if (btnEjecutar) btnEjecutar.disabled = false;
+
+  // 4. Limpiar clave guardada en localStorage y resetear selector de problemas a libre
+  try {
+    localStorage.removeItem("pythonlab_code");
+    localStorage.removeItem("unad_python_code");
+    const selectProb = $("select-problema");
+    if (selectProb) {
+      selectProb.value = "libre";
+      localStorage.setItem("pythonlab_problema", "libre");
+    }
+  } catch (e) {
+    console.warn("No se pudo limpiar localStorage:", e);
+  }
+
+  // 5. Actualizar consola y métricas visuales
+  setConsole("Editor limpio. Escribe un programa y presiona ▶ Ejecutar.", "console-info");
   actualizarNumerosLinea();
   actualizarPorcentajes();
-  guardarEnLocalStorage();
+
+  // 6. Devolver foco al editor para escribir de inmediato
+  setTimeout(() => {
+    const txtArea = $("codigo") || document.querySelector("#editor, textarea");
+    txtArea?.focus();
+  }, 50);
 });
 
 $("btnDescargar")?.addEventListener("click",()=>{
