@@ -908,31 +908,242 @@ $("btnDescargar").addEventListener("click",()=>{
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 
-codigo.addEventListener("keydown",(e)=>{
-  if(e.key === "Tab"){
+/* ---------- PLANTILLAS DE PROBLEMAS ---------- */
+const PLANTILLAS_PROBLEMAS = {
+  libre: `print("Promedio de tres notas")
+
+nota1 = float(input("Ingrese la nota 1: "))
+nota2 = float(input("Ingrese la nota 2: "))
+nota3 = float(input("Ingrese la nota 3: "))
+
+promedio = (nota1 + nota2 + nota3) / 3
+
+print("Promedio:", round(promedio, 2))
+
+if promedio >= 3:
+    print("Resultado: Aprobado")
+else:
+    print("Resultado: No aprobado")`,
+
+  p1: `# PROBLEMA 1: Cine Full - Sistema de Boletería
+# Depurar los errores de tipos, sintaxis y lógica en la venta de boletas.
+
+print("=== BIENVENIDO A CINE FULL ===")
+edad = input("Ingrese la edad del cliente: ")  # ERROR: debe convertirse a int
+dia = input("Ingrese el día de la semana (ej: miercoles): ").lower()
+
+precio_base = 15000
+
+# Error de indentación y sintaxis
+if edad < 12:
+    descuento = 0.50
+elif edad >= 60:
+    descuento = 0.40
+elif dia == "miércoles" or dia == "miercoles"
+    descuento = 0.20  # ERROR: falta : al final de la línea anterior
+else:
+    descuento = 0.0
+
+precio_final = precio_base * (1 - descuento)
+print("Precio final a pagar: $" + precio_final)  # ERROR: concatenar str con float sin str()`,
+
+  p2: `# PROBLEMA 2: Registro de Ventas y Comisiones
+# Corregir errores de conversión, cálculo de IVA y variables no definidas.
+
+total_ventas = 0
+cant_productos = int(input("¿Cuántos productos registrará?: "))
+
+for i in range(1, cant_productos + 1):
+    precio = float(input("Ingrese precio del producto " + str(i) + ": "))
+    total_ventas = total_ventas + precio
+
+iva = total_ventas * 0.19
+total_con_iva = total_ventas + IVA  # ERROR: NameError variable IVA no definida (debe ser iva)
+
+if total_ventas > 1000000:
+    comision = total_ventas * 0.05
+else:
+    comision = total_ventas * 0.02
+
+print("Total Ventas (Sin IVA): $" + str(round(total_ventas, 2)))
+print("IVA (19%): $" + str(round(iva, 2)))
+print("Total General: $" + str(round(total_con_iva, 2)))
+print("Comisión del Vendedor: $" + str(round(comision, 2)))`,
+
+  p3: `# PROBLEMA 3: Gestión de Nómina y RRHH
+# Corregir errores en deducciones de ley y retorno/llamada a funciones.
+
+def calcular_salario_neto(salario_base, horas_extra):
+    # Salud 4% y Pensión 4% (Total 8% deducción)
+    deducciones = salario_base * 0.08
+    valor_hora_extra = (salario_base / 160) * 1.5
+    pago_extras = horas_extra * valor_hora_extra
+    
+    salario_neto = salario_base - deducciones + pago_extras
+    return salario_neto
+
+nombre_emp = input("Nombre del empleado: ")
+sueldo_base = float(input("Salario base ($): "))
+extras = int(input("Horas extra trabajadas: "))
+
+# ERROR: Orden incorrecto de argumentos al llamar la función
+neto = calcular_salario_neto(extras, sueldo_base) 
+
+print("Empleado:", nombre_emp)
+print("Salario Neto a Pagar: $" + str(round(neto, 2)))`,
+
+  p4: `# PROBLEMA 4: Control de Inventario y Stock
+# Depurar errores en listas e índice fuera de rango.
+
+productos = ["Arroz", "Frijol", "Aceite", "Leche"]
+stock = [50, 12, 8, 30]
+stock_minimo = 10
+
+print("=== REPORTE DE INVENTARIO Y REABASTECIMIENTO ===")
+
+# ERROR: IndexError al iterar la lista (range llega a len(productos) + 1)
+for i in range(0, len(productos) + 1):
+    prod = productos[i]
+    cant = stock[i]
+    
+    if cant < stock_minimo:
+        estado = "⚠️ ALERTA: Reabastecer urgente"
+    else:
+        estado = "✅ Stock Suficiente"
+        
+    print(prod + ": " + str(cant) + " unidades -> " + estado)`,
+
+  p5: `# PROBLEMA 5: Evaluación de Viabilidad de Proyectos
+# Corregir errores de operador de asignación vs comparación.
+
+print("=== EVALUACIÓN FINANCIERA DE PROYECTO ===")
+
+nombre_proyecto = input("Nombre del proyecto: ")
+inversion_inicial = float(input("Inversión Inicial ($): "))
+retorno_estimado = float(input("Retorno Estimado Anual ($): "))
+anios = int(input("Años de ejecución: "))
+
+roi_porcentaje = ((retorno_estimado * anios) - inversion_inicial) / inversion_inicial * 100
+
+print("ROI Estimado:", round(roi_porcentaje, 2), "%")
+
+# ERROR: Uso del operador de asignación '=' en lugar de comparación '==' o '>='
+if roi_porcentaje = 20:
+    print("Dictamen: Proyecto ALTAMENTE VIABLE")
+elif roi_porcentaje > 0:
+    print("Dictamen: Proyecto VIABLE con retorno moderado")
+else:
+    print("Dictamen: Proyecto NO VIABLE (Riesgo alto)")`
+};
+
+/* ---------- AUTO-GUARDADO EN LOCALSTORAGE ---------- */
+const STORAGE_KEYS = {
+  CODE: "pythonlab_code",
+  NOMBRE: "pythonlab_nombre",
+  CC: "pythonlab_cc",
+  GRUPO: "pythonlab_grupo",
+  PROBLEMA: "pythonlab_problema"
+};
+
+function guardarEnLocalStorage() {
+  try {
+    if (codigo) localStorage.setItem(STORAGE_KEYS.CODE, codigo.value);
+    if (nombre) localStorage.setItem(STORAGE_KEYS.NOMBRE, nombre.value);
+    if (cc) localStorage.setItem(STORAGE_KEYS.CC, cc.value);
+    if (inputGrupo) localStorage.setItem(STORAGE_KEYS.GRUPO, inputGrupo.value);
+    const selectProb = $("select-problema");
+    if (selectProb) localStorage.setItem(STORAGE_KEYS.PROBLEMA, selectProb.value);
+  } catch (e) {
+    console.warn("No se pudo guardar en localStorage:", e);
+  }
+}
+
+function restaurarDesdeLocalStorage() {
+  try {
+    const savedNombre = localStorage.getItem(STORAGE_KEYS.NOMBRE);
+    const savedCc = localStorage.getItem(STORAGE_KEYS.CC);
+    const savedGrupo = localStorage.getItem(STORAGE_KEYS.GRUPO);
+    const savedProb = localStorage.getItem(STORAGE_KEYS.PROBLEMA);
+    const savedCode = localStorage.getItem(STORAGE_KEYS.CODE);
+
+    if (savedNombre && nombre) nombre.value = savedNombre;
+    if (savedCc && cc) cc.value = savedCc;
+    if (savedGrupo && inputGrupo) inputGrupo.value = savedGrupo;
+
+    const selectProb = $("select-problema");
+    if (savedProb && selectProb) {
+      selectProb.value = savedProb;
+    }
+
+    if (savedCode !== null && codigo) {
+      codigo.value = savedCode;
+    }
+  } catch (e) {
+    console.warn("No se pudo restaurar de localStorage:", e);
+  }
+}
+
+// Auto-guardado al escribir en los campos de estudiante
+[nombre, cc, inputGrupo].forEach(field => {
+  field?.addEventListener("input", guardarEnLocalStorage);
+});
+
+// Selector de Problemas / Plantillas
+const selectProblema = $("select-problema");
+if (selectProblema) {
+  selectProblema.addEventListener("change", (e) => {
+    const clave = e.target.value;
+    if (PLANTILLAS_PROBLEMAS[clave]) {
+      codigo.value = PLANTILLAS_PROBLEMAS[clave];
+      lineaErrorActual = null;
+      btnIrLinea.style.display = "none";
+      ocultarExplicacion();
+      totalCaracteresTipeados = codigo.value.length;
+      totalCaracteresPegados = 0;
+      actualizarNumerosLinea();
+      actualizarPorcentajes();
+      guardarEnLocalStorage();
+    }
+  });
+}
+
+// Atajos de teclado en el editor (Tab para sangría, Ctrl+Enter / Cmd+Enter para ejecutar)
+codigo.addEventListener("keydown", (e) => {
+  if (e.key === "Tab") {
     e.preventDefault();
     const start = codigo.selectionStart;
     const end = codigo.selectionEnd;
 
     codigo.value =
-      codigo.value.substring(0,start) +
+      codigo.value.substring(0, start) +
       "    " +
       codigo.value.substring(end);
 
     codigo.selectionStart = codigo.selectionEnd = start + 4;
     actualizarNumerosLinea();
+    guardarEnLocalStorage();
+  } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+    e.preventDefault();
+    if (!btnEjecutar.disabled) {
+      ejecutarSesion(false);
+    }
   }
 });
 
-window.addEventListener("load",()=>{
+codigo.addEventListener("input", () => {
+  guardarEnLocalStorage();
+});
+
+window.addEventListener("load", () => {
+  restaurarDesdeLocalStorage();
   actualizarNumerosLinea();
-  if(codigo && codigo.value.length > 0){
+  if (codigo && codigo.value.length > 0) {
     totalCaracteresTipeados = codigo.value.length;
     actualizarPorcentajes();
   }
 
-  setTimeout(()=>{
-    if(typeof loadPyodide !== "function"){
+  setTimeout(() => {
+    if (typeof loadPyodide !== "function") {
       setEstadoMotor("⚠️ Pyodide no disponible", "error");
       setConsole(
         "⚠️ Chrome abrió la aplicación, pero no pudo descargar Pyodide.\n\n" +
@@ -940,5 +1151,5 @@ window.addEventListener("load",()=>{
         "console-error"
       );
     }
-  },1200);
+  }, 1200);
 });

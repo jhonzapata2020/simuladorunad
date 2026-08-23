@@ -445,6 +445,36 @@ button:disabled {
   transform: translateY(-1px);
 }
 
+.select-template {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.select-template:hover {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.select-template:focus {
+  border-color: var(--unad-cyan);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+.select-template option {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
 .btn-download {
   width: 100%;
   justify-content: center;
