@@ -33,58 +33,27 @@
 
 <body>
 
-<header class="hero-header">
-  <div class="hero-ambient-glow hero-glow-1"></div>
-  <div class="hero-ambient-glow hero-glow-2"></div>
-  
-  <div class="hero-container">
-    <div class="hero-brand">
-      <div class="hero-app-icon-wrapper">
-        <img class="hero-app-icon" src="assets/pythonlab-icon.png?v=5" alt="Identidad gráfica PythonLab UNAD">
-        <div class="hero-icon-ring"></div>
-      </div>
-      <div class="hero-title-divider" aria-hidden="true"></div>
-
-      <div class="hero-copy">
-        <h1 class="hero-title">
-          <span class="sim">Simulador </span><span class="python">Python</span><span class="lab">Lab</span> <span class="unad">UNAD</span>
-        </h1>
-        <div class="hero-subtitle">
-          Simulador de Revisión de Código para la Red de Programación<br>
-          <strong>Ingeniería de Sistemas</strong> — Universidad Nacional Abierta y a Distancia
-        </div>
-      </div>
-
-      <div id="estadoMotor" class="estado-badge estado-idle">
-        <span class="status-dot"></span>
-        <span class="status-text">⏳ Motor Python: sin iniciar</span>
-      </div>
-
-      <div class="unad-logo-card" title="Universidad Nacional Abierta y a Distancia - UNAD">
-        <img src="assets/logo-unad.png" alt="UNAD Logo">
-      </div>
-    </div>
-
-    <div class="hero-chip-row">
-      <div class="hero-chip small">
-        <span class="hero-chip-icon">🐍</span>
-        <span>Python 3.11</span>
-      </div>
-      <span class="hero-chip-dot"></span>
-
-      <div class="hero-chip medium">
-        <span class="hero-chip-icon">&lt;/&gt;</span>
-        <span>Programación</span>
-      </div>
-      <span class="hero-chip-dot"></span>
-
-      <div class="hero-chip large">
-        <span class="hero-chip-icon">🎓</span>
-        <span>Ingeniería de Sistemas</span>
-      </div>
+<header class="app-navbar">
+  <div class="nav-brand">
+    <img src="assets/pythonlab-icon.png?v=5" alt="PythonLab Logo" class="nav-logo" />
+    <div class="nav-titles">
+      <h1 class="brand-title">Python<span>Lab</span> <span class="badge-unad">UNAD</span></h1>
+      <span class="brand-subtitle">Fundamentos de Programación · ECBTI</span>
     </div>
   </div>
-  <div class="header-bottom-line"></div>
+
+  <div class="nav-meta-chips">
+    <span class="nav-chip"><i class="devicon-python-plain"></i> Python 3.11</span>
+    <span class="nav-chip-divider">·</span>
+    <span class="nav-chip">Ingeniería de Sistemas</span>
+  </div>
+
+  <div class="nav-status-wrapper">
+    <div id="estadoMotor" class="status-badge estado-badge estado-idle">
+      <span class="status-dot"></span>
+      <span class="status-text">Motor Python: sin iniciar</span>
+    </div>
+  </div>
 </header>
 
 <main class="main-content">
