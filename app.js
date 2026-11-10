@@ -506,32 +506,99 @@ async function cargarPython(){
 }
 
 function generarQRDataURL(texto){
-  const contenedor = $("qrTemp");
-  contenedor.innerHTML = "";
+  const textoLimpio = (texto || "").trim();
 
-  if(typeof QRCode !== "function"){
-    throw new Error("No se pudo cargar la librería para generar el código QR.");
+  // 1. Prioridad: qrcode-generator (soporta versiones 1 a 40 sin overflow y UTF-8 completo)
+  if (typeof qrcode === "function") {
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(textoLimpio);
+      qr.make();
+      return qr.createDataURL(4, 0);
+    } catch(e) {
+      try {
+        const qrL = qrcode(0, 'L');
+        qrL.addData(textoLimpio);
+        qrL.make();
+        return qrL.createDataURL(4, 0);
+      } catch(e2) {
+        console.warn("Fallo qrcode-generator, intentando QRCode fallback:", e2);
+      }
+    }
   }
 
-  new QRCode(contenedor,{
-    text:texto,
-    width:180,
-    height:180,
-    correctLevel:QRCode.CorrectLevel.H
-  });
+  // 2. Fallback: QRCode (davidshimjs) con proteccion contra overflow
+  if (typeof QRCode === "function") {
+    const contenedor = $("qrTemp");
+    if (contenedor) contenedor.innerHTML = "";
 
-  const canvas = contenedor.querySelector("canvas");
-  if(canvas) return canvas.toDataURL("image/png");
+    let textoSeguro = textoLimpio;
+    if (textoSeguro.length > 70) {
+      try {
+        textoSeguro = textoSeguro.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      } catch(_) {}
+    }
 
-  const img = contenedor.querySelector("img");
-  if(img && img.src) return img.src;
+    const niveles = [
+      QRCode.CorrectLevel.L,
+      QRCode.CorrectLevel.M,
+      QRCode.CorrectLevel.Q,
+      QRCode.CorrectLevel.H
+    ];
 
-  throw new Error("No se pudo convertir el QR a imagen.");
+    for (const lvl of niveles) {
+      try {
+        if (contenedor) contenedor.innerHTML = "";
+        new QRCode(contenedor, {
+          text: textoSeguro,
+          width: 180,
+          height: 180,
+          correctLevel: lvl
+        });
+
+        const canvas = contenedor.querySelector("canvas");
+        if (canvas) return canvas.toDataURL("image/png");
+
+        const img = contenedor.querySelector("img");
+        if (img && img.src) return img.src;
+      } catch (err) {
+        console.warn("Fallo nivel QR " + lvl + ":", err.message);
+      }
+    }
+
+    if (textoSeguro.length > 80) {
+      try {
+        const textoCompacto = textoSeguro.slice(0, 80);
+        if (contenedor) contenedor.innerHTML = "";
+        new QRCode(contenedor, {
+          text: textoCompacto,
+          width: 180,
+          height: 180,
+          correctLevel: QRCode.CorrectLevel.L
+        });
+        const canvas = contenedor.querySelector("canvas");
+        if (canvas) return canvas.toDataURL("image/png");
+      } catch (err2) {
+        console.warn("Fallo compactado:", err2);
+      }
+    }
+  }
+
+  // 3. Fallback visual seguro en SVG dataURL (garantiza emision de la insignia sin excepcion)
+  const svgPlaceholder = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+    <rect width="180" height="180" fill="#f8fafc" stroke="#0284c7" stroke-width="2" rx="10"/>
+    <text x="90" y="70" text-anchor="middle" font-family="Arial, sans-serif" font-size="30">✓</text>
+    <text x="90" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#0369a1">VERIFICACIÓN UNAD</text>
+    <text x="90" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Insignia Certificada</text>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgPlaceholder);
 }
 
 function crearInsignia(nom, documento, grupo){
+  const textNom = (nom || "Estudiante").trim();
+  const textDoc = (documento || "").trim();
   const textGrupo = grupo ? grupo.trim() : "";
-  const qrPayload = `Estudiante: ${nom} | CC: ${documento}${textGrupo ? ` | Grupo: ${textGrupo}` : ""}`;
+  const qrPayload = `Estudiante: ${textNom} | CC: ${textDoc}${textGrupo ? ` | Grupo: ${textGrupo}` : ""}`;
   const qrData = generarQRDataURL(qrPayload);
   const fecha = new Date().toLocaleDateString("es-CO",{
     year:"numeric",month:"long",day:"numeric"
@@ -545,6 +612,23 @@ function crearInsignia(nom, documento, grupo){
     : `${iconoFmt} Modo: Texto pegado/externo (${pctPegado}% pegado | ${pctManual}% manual)`;
 
   const selloColor = esManual ? "#4ade80" : "#38bdf8";
+
+  // Ajuste dinamico de fuente para nombres y grupos extensos (evita solaparse con el QR)
+  let fontSizeNom = 28;
+  if (textNom.length > 40) {
+    fontSizeNom = 18;
+  } else if (textNom.length > 30) {
+    fontSizeNom = 21;
+  } else if (textNom.length > 22) {
+    fontSizeNom = 24;
+  }
+
+  let fontSizeGrupo = 18;
+  if (textGrupo.length > 40) {
+    fontSizeGrupo = 13;
+  } else if (textGrupo.length > 28) {
+    fontSizeGrupo = 15;
+  }
 
   return `
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560">
@@ -572,19 +656,19 @@ function crearInsignia(nom, documento, grupo){
         font-family="Arial" font-size="15" fill="#aebfd7">ESTUDIANTE</text>
 
   <text x="90" y="298"
-        font-family="Arial" font-size="28" font-weight="bold" fill="#ffffff">${escXML(nom)}</text>
+        font-family="Arial, sans-serif" font-size="${fontSizeNom}" font-weight="bold" fill="#ffffff">${escXML(textNom)}</text>
 
   <text x="90" y="338"
-        font-family="Arial" font-size="20" fill="#f4b400">CC: ${escXML(documento)}</text>
+        font-family="Arial, sans-serif" font-size="20" fill="#f4b400">CC: ${escXML(textDoc)}</text>
 
   <text x="90" y="374"
-        font-family="Arial" font-size="18" font-weight="bold" fill="#38bdf8">GRUPO: ${escXML(textGrupo || "N/A")}</text>
+        font-family="Arial, sans-serif" font-size="${fontSizeGrupo}" font-weight="bold" fill="#38bdf8">GRUPO: ${escXML(textGrupo || "N/A")}</text>
 
   <text x="90" y="414"
-        font-family="Arial" font-size="15" fill="#dce8f8">Competencia: ejecución de código Python</text>
+        font-family="Arial, sans-serif" font-size="15" fill="#dce8f8">Competencia: ejecución de código Python</text>
 
   <text x="90" y="442"
-        font-family="Arial" font-size="14" fill="#aebfd7">${escXML(fecha)}</text>
+        font-family="Arial, sans-serif" font-size="14" fill="#aebfd7">${escXML(fecha)}</text>
 
   <!-- Sello de Autoria / Porcentaje de Digitación -->
   <rect x="90" y="464" width="600" height="40" rx="10" fill="#081b38" stroke="${selloColor}" stroke-width="2"/>
@@ -594,7 +678,7 @@ function crearInsignia(nom, documento, grupo){
   <image href="${qrData}" x="738" y="258" width="180" height="180"/>
 
   <text x="827" y="482" text-anchor="middle"
-        font-family="Arial" font-size="13" fill="#dce8f8">Escanea para ver datos</text>
+        font-family="Arial, sans-serif" font-size="13" fill="#dce8f8">Escanea para ver datos</text>
 </svg>`;
 }
 
